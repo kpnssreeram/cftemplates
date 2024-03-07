@@ -83,7 +83,7 @@ Resources:
           # AssignPublicIp: DISABLED
           # Subnets: !GetAtt NexusVPC.PrivateSubnetIds
           Subnets:
-           - vpc-02b6ea6e414e3de59
+           - subnet-0961246da2943af47
       # DeploymentConfiguration:
       #   MaximumPercent: 200
       #   MinimumHealthyPercent: 50
