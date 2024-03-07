@@ -104,7 +104,7 @@ Resources:
 
       ContainerDefinitions:
         - Name: A/B_TestingContainer
-          Image: A/B_TestingImage
+          Image: abtesting
           Environment:
             - Name: ECS_FARGATE
               Value: "true"
