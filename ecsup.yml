@@ -79,10 +79,12 @@ Resources:
       LaunchType: FARGATE
       DesiredCount: 1
       TaskDefinition: !Ref TaskDefinition
-      # NetworkConfiguration:
-      #   AwsvpcConfiguration:
+      NetworkConfiguration:
+        AwsvpcConfiguration:
           # AssignPublicIp: DISABLED
           # Subnets: !GetAtt NexusVPC.PrivateSubnetIds
+          Subnets:
+           vpc-02b6ea6e414e3de59
       # DeploymentConfiguration:
       #   MaximumPercent: 200
       #   MinimumHealthyPercent: 50
