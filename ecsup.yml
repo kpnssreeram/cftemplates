@@ -72,22 +72,22 @@ Resources:
     Properties:
       ClusterName: MyECSCluster
 
-  Service:
-    Type: AWS::ECS::Service
-    Properties:
-      Cluster: !Ref EcsCluster
-      LaunchType: FARGATE
-      DesiredCount: 1
-      HealthCheckGracePeriodSeconds: 30
-      TaskDefinition: !Ref TaskDefinition
-      # NetworkConfiguration:
-      #   AwsvpcConfiguration:
-          # AssignPublicIp: DISABLED
-          # Subnets: !GetAtt NexusVPC.PrivateSubnetIds
-      # DeploymentConfiguration:
-      #   MaximumPercent: 200
-      #   MinimumHealthyPercent: 50
-      PropagateTags: TASK_DEFINITION
+    Service:
+      Type: AWS::ECS::Service
+      Properties:
+        Cluster: !Ref EcsCluster
+        LaunchType: FARGATE
+        DesiredCount: 1
+        HealthCheckGracePeriodSeconds: 30
+        TaskDefinition: !Ref TaskDefinition
+        # NetworkConfiguration:
+        #   AwsvpcConfiguration:
+            # AssignPublicIp: DISABLED
+            # Subnets: !GetAtt NexusVPC.PrivateSubnetIds
+        # DeploymentConfiguration:
+        #   MaximumPercent: 200
+        #   MinimumHealthyPercent: 50
+        PropagateTags: TASK_DEFINITION
 
 
   TaskDefinition:
