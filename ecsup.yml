@@ -1,6 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: A/B testing deployment 
-
 Parameters:
   Universe:
     Description: Universe
@@ -8,6 +7,19 @@ Parameters:
     Default: dev
     AllowedValues:
       - dev
+
+  # Image:
+  #   Description: The version of the service to have deployed to this stack, e.g. the git commit id
+  #   Type: String
+
+  # TargetPort:
+  #   Description: HTTP port
+  #   Type: Number
+  #   Default: 8080
+
+  # ConfigImage:
+  #   Description: Megabus config image
+  #   Type: String
 
 Mappings:
   TaskParams:
@@ -17,25 +29,66 @@ Mappings:
       Heap: 999
 
 Resources:
-  EcsCluster:
-    Type: AWS::ECS::Cluster
+  # NexusVPC:
+  #   Type: Custom::NexusVpc
+  #   Version: 1.0
+  #   Properties:
+  #     ServiceToken: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:CommonCfnResource
 
   TaskRole:
     Type: AWS::IAM::Role
     Properties:
-      # (Your existing configuration for TaskRole)
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: EcrImagePull
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Resource: "*"
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:GetAuthorizationToken
+
+        - PolicyName: AdministratorAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+    Properties:
+      ClusterName: MyECSCluster
 
   Service:
     Type: AWS::ECS::Service
     Properties:
-      Cluster: !Ref EcsCluster  # Reference the EcsCluster resource
+      Cluster: !Ref EcsCluster
       LaunchType: FARGATE
       DesiredCount: 1
       HealthCheckGracePeriodSeconds: 30
       TaskDefinition: !Ref TaskDefinition
       NetworkConfiguration:
         AwsvpcConfiguration:
-          # (Your existing configuration for AwsvpcConfiguration)
+          # AssignPublicIp: DISABLED
+          # Subnets: !GetAtt NexusVPC.PrivateSubnetIds
+      # DeploymentConfiguration:
+      #   MaximumPercent: 200
+      #   MinimumHealthyPercent: 50
+      PropagateTags: TASK_DEFINITION
+
 
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -48,6 +101,7 @@ Resources:
       NetworkMode: awsvpc
       Cpu: !FindInMap [ TaskParams, !Ref Universe, CPU ]
       Memory: !FindInMap [ TaskParams, !Ref Universe, RAM ]
+
       ContainerDefinitions:
         - Name: A/B_TestingContainer
           Image: A/B_TestingImage
