@@ -36,7 +36,7 @@ jobs:
     - name: Deploy CloudFormation stack
       run: |
         aws cloudformation deploy \
-          --stack-name <stack name> \
+          --stack-name abstack \
           --template-file ecsup.yml \
           --parameter-overrides \
             Universe=${{inputs.Universe }} \
@@ -45,7 +45,6 @@ jobs:
           --no-fail-on-empty-changeset \
           --tags \
             bv:nexus:team=emodb-dev@bazaarvoice.com \
-            bv:nexus:vpc=<vpc>\
             bv:system=emodb \
             bv:nexus:service=megabus \
             bv:nexus:role=app \
