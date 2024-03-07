@@ -77,7 +77,6 @@ Resources:
     Properties:
       Cluster: !Ref EcsCluster
       LaunchType: FARGATE
-      DesiredCount: 1
       TaskDefinition: !Ref TaskDefinition
       NetworkConfiguration:
         AwsvpcConfiguration:
