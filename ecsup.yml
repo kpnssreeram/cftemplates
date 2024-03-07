@@ -104,7 +104,7 @@ Resources:
 
       ContainerDefinitions:
         - Name: ab-testing-container
-          Image: abtesting
+          Image: 058264087706.dkr.ecr.ap-south-1.amazonaws.com/abtesting:latest
           Environment:
             - Name: ECS_FARGATE
               Value: "true"
