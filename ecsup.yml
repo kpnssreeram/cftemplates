@@ -103,7 +103,7 @@ Resources:
       Memory: !FindInMap [ TaskParams, !Ref Universe, RAM ]
 
       ContainerDefinitions:
-        - Name: A/B_TestingContainer
+        - Name: ab-testing-container
           Image: abtesting
           Environment:
             - Name: ECS_FARGATE
