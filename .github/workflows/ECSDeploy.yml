@@ -5,6 +5,15 @@ on:
     branches:
       - main
 
+env:
+    aws-region: ap-south-1
+
+
+permissions:
+    id-token: write
+    contents: read
+    actions: read
+    
 jobs:
   deploy:
     runs-on: ubuntu-latest
@@ -16,9 +25,9 @@ jobs:
     - name: configure aws credentials
       uses: aws-actions/configure-aws-credentials@v4
       with:
-        role-to-assume: arn:aws:iam::${{env.AWSCRED}}:role/emojigitrole
+        role-to-assume: arn:aws:iam::058264087706:role/TestingAB
         role-session-name: emojiSession
-        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+        aws-region: ${{env.aws-region}}
 
     - name: Deploy CloudFormation stack
       run: |
