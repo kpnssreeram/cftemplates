@@ -1,0 +1,56 @@
+name: AWS CloudFormation Deployment
+
+on:
+  push:
+    branches:
+      - main
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v2
+
+    - name: configure aws credentials
+      uses: aws-actions/configure-aws-credentials@v4
+      with:
+        role-to-assume: arn:aws:iam::${{env.AWSCRED}}:role/emojigitrole
+        role-session-name: emojiSession
+        aws-region: ${{ env.AWS_DEFAULT_REGION }}
+
+    - name: Deploy CloudFormation stack
+      run: |
+        aws cloudformation deploy \
+          --stack-name <stack name> \
+          --template-file ecs.yml \
+          --parameter-overrides \
+            InternalTargetGroup=${{ secrets.Universe }}${{ secrets.DnsSuffix }}-emodb-megabus-int \
+            Universe=${{ secrets.Universe }} \
+            Image=${{ secrets.Image }} \
+            ConfigImageVersion=${{ secrets.ConfigImageVersion }} \
+            DnsSuffix=${{ secrets.DnsSuffix }} \
+          --capabilities CAPABILITY_IAM \
+          --no-fail-on-empty-changeset \
+          --tags \
+            bv:nexus:team=emodb-dev@bazaarvoice.com \
+            bv:nexus:vpc=<vpc> \
+            bv:system=emodb \
+            bv:nexus:service=megabus \
+            bv:nexus:role=app \
+            bv:nexus:owner=emodb-dev@bazaarvoice.com \
+            bv:nexus:access=none \
+            bv:nexus:costcenter=emodb-dev@bazaarvoice.com \
+            bv:nexus:datatype=client+personal \
+            bv:nexus:env=${{ secrets.env }} \
+            env=${{ secrets.env }} \
+            universe=${{ secrets.Universe }} \
+            service=megabus \
+          --region <region> \
+          --profile <profile>
+
+      env:
+        AWS_DEFAULT_REGION: <region>
+
+  # Add more jobs or steps as needed

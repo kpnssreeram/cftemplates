@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: megabus fargate deployment #ECS A/B TESTING
+Parameters:
+  Universe:
+    Description: Universe
+    Type: String
+    AllowedValues:
+      - dev
+
+  Image:
+    Description: The version of the service to have deployed to this stack, e.g. the git commit id
+    Type: String
+
+  TargetPort:
+    Description: HTTP port
+    Type: Number
+    Default: 8080
+
+  ConfigImage:
+    Description: Megabus config image
+    Type: String
+
+Mappings:
+  TaskParams:
+    dev:
+      CPU: 1028
+      RAM: 1096
+      Heap: 999
+
+Resources:
+  # NexusVPC:
+  #   Type: Custom::NexusVpc
+  #   Version: 1.0
+  #   Properties:
+  #     ServiceToken: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:CommonCfnResource
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: EcrImagePull
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Resource: "*"
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:GetAuthorizationToken
+
+        - PolicyName: AdministratorAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+EcsCluster:
+  Type: AWS::ECS::Cluster
+
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref EcsCluster
+      LaunchType: FARGATE
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 30
+      TaskDefinition: !Ref TaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          # AssignPublicIp: DISABLED
+          # Subnets: !GetAtt NexusVPC.PrivateSubnetIds
+      # DeploymentConfiguration:
+      #   MaximumPercent: 200
+      #   MinimumHealthyPercent: 50
+      PropagateTags: TASK_DEFINITION
+
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub A_B_Testing-${Universe}
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ExecutionRoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: !FindInMap [ TaskParams, !Ref Universe, CPU ]
+      Memory: !FindInMap [ TaskParams, !Ref Universe, RAM ]
+
+      ContainerDefinitions:
+        - Name: A/B_TestingContainer
+          Image: A/B_TestingImage
+          Environment:
+            - Name: ECS_FARGATE
+              Value: "true"
+            - Name: DD_RECEIVER_PORT
+              Value: "8125"
+            - Name: DD_HOSTNAME
+              Value: !Sub ${Universe}-emodb-A/B_Testing-${AWS::Region}
+            - Name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
+              Value: "true"
+            - Name: DD_TAGS
+              Value: !Sub service:A/B_Testing universe:${Universe} env:${Universe} bv:nexus:team:emodb-dev@bazaarvoice.com region:${AWS::Region}
+
+  # LogGroup:
+  #   Type: AWS::Logs::LogGroup
+  #   Properties:
+  #     LogGroupName: !Sub /aws/ecs/emodb/megabus/${Universe}${DnsSuffix}
+  #     RetentionInDays: 14

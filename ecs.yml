@@ -1,0 +1,312 @@
+---
+# For manual deployment use next syntax
+# aws cloudformation deploy                                        \
+#  --stack-name <stack name>                                       \
+#  --template-file emodb-megabus-ecs.yml                           \
+#  --parameter-overrides                                           \
+#    InternalTargetGroup=${Universe}${DnsSuffix}-emodb-megabus-int \
+#    Universe=<Universe>                                           \
+#    Image=<Image>                                                 \
+#    ConfigImageVersion=<ConfigImageVersion>                       \
+#    DnsSuffix=<DnsSuffix>                                         \
+#  --capabilities CAPABILITY_IAM                                   \
+#  --no-fail-on-empty-changeset                                    \
+#  --tags                                                          \
+#    bv:nexus:team=emodb-dev@bazaarvoice.com                       \
+#    bv:nexus:vpc=<vpc>                                            \
+#    bv:system=emodb                                               \
+#    bv:nexus:service=megabus                                      \
+#    bv:nexus:role=app                                             \
+#    bv:nexus:owner=emodb-dev@bazaarvoice.com                      \
+#    bv:nexus:access=none                                          \
+#    bv:nexus:costcenter=emodb-dev@bazaarvoice.com                 \
+#    bv:nexus:datatype=client+personal                             \
+#    bv:nexus:env=<env>                                            \
+#    env=<env>                                                     \
+#    universe=<Universe>                                           \
+#    service=megabus                                               \
+#  --region <region>                                               \
+#  --profile <profile>
+AWSTemplateFormatVersion: "2010-09-09"
+Description: megabus fargate deployment #ECS A/B TESTING
+Parameters:
+  Universe:
+    Description: Universe
+    Type: String
+    AllowedValues:
+      - dev
+
+  Image:
+    Description: The version of the service to have deployed to this stack, e.g. the git commit id
+    Type: String
+
+  TargetPort:
+    Description: HTTP port
+    Type: Number
+    Default: 8080
+
+  ConfigImage:
+    Description: Megabus config image
+    Type: String
+
+  # DesiredContainerCount:
+  #   Description: Desired Container Count
+  #   Type: Number
+  #   Default: 1
+  # DnsSuffix:
+  #     Type: String
+  #     Description: The suffix to append to the DNS entry (for testing purposes)
+  #     Default: ""
+
+  # AdminPort:
+  #   Description: Admin HTTP port
+  #   Type: Number
+  #   Default: 8081
+
+  # DatadogApiKey:
+  #   Description: The Datadog Api Key
+  #   Type: String
+  #   Default: '{{resolve:secretsmanager:emodb/datadog/apikey:SecretString:datadogApiKey}}'
+  
+#   LaceWorkImage:
+#     Description: Lacework image
+#     Type: String
+#     Default: "549050352176.dkr.ecr.us-east-1.amazonaws.com/lacework/datacollector:latest-sidecar"
+
+Mappings:
+  TaskParams:
+    dev:
+      CPU: 2048
+      RAM: 2096
+      Heap: 2662
+    
+  # InternalIpsMapping:
+  #   emomegabusrules:
+  #     qa:
+  #       - { IpProtocol: tcp, FromPort: 8080, ToPort: 8081, CidrIp: 10.110.0.0/16, Description: Access from us-east-1 bv-nexus-qa }
+  #       - { IpProtocol: tcp, FromPort: 8080, ToPort: 8081, CidrIp: 10.111.0.0/16, Description: Access from eu-west-1 bv-nexus-qa }
+  #     prod:
+  #       - { IpProtocol: tcp, FromPort: 8080, ToPort: 8081, CidrIp: 10.120.0.0/16, Description: Access from us-east-1 bv-nexus-prod }
+  #       - { IpProtocol: tcp, FromPort: 8080, ToPort: 8081, CidrIp: 10.121.0.0/16, Description: Access from eu-west-1 bv-nexus-prod }
+
+Resources:
+  NexusVPC:
+    Type: Custom::NexusVpc
+    Version: 1.0
+    Properties:
+      ServiceToken: !Sub arn:aws:lambda:${AWS::Region}:${AWS::AccountId}:function:CommonCfnResource
+
+  # SecurityGroupApp:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: megabus SG
+  #     VpcId: !GetAtt NexusVPC.VpcId
+  #     SecurityGroupIngress: !FindInMap [ InternalIpsMapping, emomegabusrules, !FindInMap [ UniverseToVpcMap, universes, !Ref "Universe" ] ]
+
+  # SecurityGroupLB:
+  #   Type: AWS::EC2::SecurityGroup
+  #   Properties:
+  #     GroupDescription: megabus SG from alb
+  #     VpcId: !GetAtt NexusVPC.VpcId
+  #     SecurityGroupIngress:
+  #       - IpProtocol: tcp
+  #         FromPort: !Ref TargetPort
+  #         ToPort: !Ref TargetPort
+  #         SourceSecurityGroupId:
+  #           Fn::ImportValue:
+  #             !Sub ${Universe}${DnsSuffix}-emodb-megabus-int:SecurityGroup
+  #       - IpProtocol: tcp
+  #         FromPort: !Ref AdminPort
+  #         ToPort: !Ref AdminPort
+  #         SourceSecurityGroupId:
+  #           Fn::ImportValue:
+  #             !Sub ${Universe}${DnsSuffix}-emodb-megabus-int:SecurityGroup
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      Path: /
+      AssumeRolePolicyDocument:
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service:
+                - ecs-tasks.amazonaws.com
+            Action:
+              - sts:AssumeRole
+      Policies:
+        - PolicyName: EcrImagePull
+          PolicyDocument:
+            Statement:
+              - Effect: Allow
+                Resource: "*"
+                Action:
+                  - ecr:BatchCheckLayerAvailability
+                  - ecr:BatchGetImage
+                  - ecr:GetDownloadUrlForLayer
+                  - ecr:GetAuthorizationToken
+
+        - PolicyName: AdministratorAccess
+          PolicyDocument:
+            Version: '2012-10-17'
+            Statement:
+              - Effect: Allow
+                Action: '*'
+                Resource: '*'
+
+  EcsCluster:
+    Type: AWS::ECS::Cluster
+
+  Service:
+    Type: AWS::ECS::Service
+    Properties:
+      Cluster: !Ref EcsCluster
+      LaunchType: FARGATE
+      DesiredCount: 1
+      HealthCheckGracePeriodSeconds: 30
+      TaskDefinition: !Ref TaskDefinition
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          AssignPublicIp: DISABLED
+          # SecurityGroups:
+          #   - !Ref SecurityGroupLB
+          #   - !Ref SecurityGroupApp
+          Subnets: !GetAtt NexusVPC.PrivateSubnetIds
+      DeploymentConfiguration:
+        MaximumPercent: 200
+        MinimumHealthyPercent: 50
+      # LoadBalancers:
+      #   - ContainerName: megabus-container
+      #     ContainerPort: !Ref TargetPort
+      #     TargetGroupArn:
+      #       Fn::ImportValue:
+      #         !Ref InternalTargetGroup
+      PropagateTags: TASK_DEFINITION
+
+
+  TaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub megabus-${Universe}
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      ExecutionRoleArn: !Sub arn:aws:iam::${AWS::AccountId}:role/ecsTaskExecutionRole
+      RequiresCompatibilities:
+        - FARGATE
+      NetworkMode: awsvpc
+      Cpu: !FindInMap [ TaskParams, !Ref Universe, CPU ]
+      Memory: !FindInMap [ TaskParams, !Ref Universe, RAM ]
+
+      ContainerDefinitions:
+        - Name: A/B_TestingContainer
+          Image: A/B_TestingImage
+          # LogConfiguration:
+          #   LogDriver: awslogs
+          #   Options:
+          #     awslogs-group: !Sub /aws/ecs/emodb/megabus/${Universe}${DnsSuffix}
+          #     awslogs-region: !Ref AWS::Region
+          #     awslogs-stream-prefix: !Sub datadog-${Universe}${DnsSuffix}
+          Environment:
+            # - Name: DD_API_KEY
+            #   Value: !Ref DatadogApiKey
+            - Name: ECS_FARGATE
+              Value: "true"
+            - Name: DD_RECEIVER_PORT
+              Value: "8125"
+            - Name: DD_HOSTNAME
+              Value: !Sub ${Universe}-emodb-A/B_Testing-${AWS::Region}
+            - Name: DD_DOGSTATSD_NON_LOCAL_TRAFFIC
+              Value: "true"
+            - Name: DD_TAGS
+              Value: !Sub service:A/B_Testing universe:${Universe} env:${Universe} bv:nexus:team:emodb-dev@bazaarvoice.com region:${AWS::Region}
+
+        # - Name: lacework-datacollector
+        #   Image: !Sub ${LaceWorkImage}
+        #   Essential: false
+        #   Environment:
+        #     - Name: LaceworkVerbose
+        #       Value: "true"
+        
+        # - Name: config-sidecar
+        #   Image: !Ref ConfigImage
+        #   Essential: false
+        #   Environment:
+        #     - Name: DD_API_KEY
+        #       Value: !Ref DatadogApiKey
+        #     - Name: ADMIN_API_KEY
+        #       Value: !FindInMap [ TaskParams, !Ref Universe, AdminApiKey ]
+        #     - Name: REPLICATION_API_KEY
+        #       Value: !FindInMap [ TaskParams, !Ref Universe, ReplicationApiKey ]
+        #     - Name: CC_API_KEY
+        #       Value: !FindInMap [ TaskParams, !Ref Universe, CompControlApiKey ]
+        #     - Name: SASL_PASSWORD
+        #       Value: !FindInMap [ TaskParams, !Ref Universe, SASLpassword ]
+        #     - Name: MODE
+        #       Value: "megabus"
+        #     - Name: UNIVERSE
+        #       Value: !Ref Universe
+        #     - Name: REGION
+        #       Value: !Sub "${AWS::Region}"
+        #   LogConfiguration:
+        #     LogDriver: awslogs
+        #     Options:
+        #       awslogs-group: !Sub /aws/ecs/emodb/megabus/${Universe}${DnsSuffix}
+        #       awslogs-region: !Ref AWS::Region
+        #       awslogs-stream-prefix: !Sub conf-${Universe}${DnsSuffix}
+        # - Name: megabus-container
+        #   Essential: true
+        #   Image: !Ref Image
+        #   User: "0"
+        #   PortMappings:
+        #     - ContainerPort: !Ref TargetPort
+        #   VolumesFrom:
+        #     - SourceContainer: config-sidecar
+        #     - SourceContainer: lacework-datacollector
+        #       ReadOnly: true
+        #   DependsOn:
+        #     - ContainerName: config-sidecar
+        #       Condition: "SUCCESS"
+        #     - ContainerName: lacework-datacollector
+        #       Condition: "SUCCESS"
+        #   EntryPoint:
+        #     - "sh"
+        #     - "-c"
+        #   Command:
+        #     - !Sub "/var/lib/lacework-backup/lacework-sidecar.sh && java -jar $JAVA_OPTS $JAVA_ARG /app/emodb-web.jar server /config/config-megabus-${Universe}-${AWS::Region}.yaml /config/ddl.yaml"
+        #   Environment:
+        #     - Name: MODE
+        #       Value: "megabus"
+        #     - Name: UNIVERSE
+        #       Value: !Ref Universe
+        #     - Name: REGION
+        #       Value: !Sub "${AWS::Region}"
+        #     - Name: LaceworkVerbose
+        #       Value: "true"
+        #     - Name: LaceworkAccessToken
+        #       Value: "93877251685d563a563a9511cc1d94e2031d352d261ee85e28aaf48f"
+        #     - Name: JAVA_OPTS
+        #       Value: !Sub
+        #         - -Xms${Heap}m -Xmx${Heap}m
+        #         - {
+        #           Heap: !FindInMap [ TaskParams, !Ref Universe, Heap ],
+        #         }
+        #     - Name: JAVA_ARG
+        #       Value: "-agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:7778 -Dcom.sun.jndi.rmiURLParsing=legacy -Dcom.sun.management.jmxremote.port=7777 -Dcom.sun.management.jmxremote.authenticate=false -Dcom.sun.management.jmxremote.ssl=false"
+        #   Ulimits:
+        #     - Name: memlock
+        #       SoftLimit: -1
+        #       HardLimit: -1
+        #     - Name: nofile
+        #       SoftLimit: 65536
+        #       HardLimit: 65536
+        #   LogConfiguration:
+        #     LogDriver: awslogs
+        #     Options:
+        #       awslogs-group: !Sub /aws/ecs/emodb/megabus/${Universe}${DnsSuffix}
+        #       awslogs-region: !Ref AWS::Region
+        #       awslogs-stream-prefix: !Sub ${Universe}${DnsSuffix}
+
+  LogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/ecs/emodb/megabus/${Universe}${DnsSuffix}
+      RetentionInDays: 14
