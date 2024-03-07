@@ -24,8 +24,8 @@ Parameters:
 Mappings:
   TaskParams:
     dev:
-      CPU: 1028
-      RAM: 1096
+      CPU: 256
+      RAM: 512
       Heap: 999
 
 Resources:
