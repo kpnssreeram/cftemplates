@@ -1,5 +1,5 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: megabus fargate deployment #ECS A/B TESTING
+Description: A/B testing deployment ¡`£~~
 Parameters:
   Universe:
     Description: Universe
