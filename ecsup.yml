@@ -80,8 +80,8 @@ Resources:
       DesiredCount: 1
       HealthCheckGracePeriodSeconds: 30
       TaskDefinition: !Ref TaskDefinition
-      NetworkConfiguration:
-        AwsvpcConfiguration:
+      # NetworkConfiguration:
+      #   AwsvpcConfiguration:
           # AssignPublicIp: DISABLED
           # Subnets: !GetAtt NexusVPC.PrivateSubnetIds
       # DeploymentConfiguration:
