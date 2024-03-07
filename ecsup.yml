@@ -1,9 +1,10 @@
 AWSTemplateFormatVersion: "2010-09-09"
-Description: A/B testing deployment ¡`£~~
+Description: A/B testing deployment 
 Parameters:
   Universe:
     Description: Universe
     Type: String
+    Default: dev
     AllowedValues:
       - dev
 

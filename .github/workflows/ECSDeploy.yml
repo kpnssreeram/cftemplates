@@ -1,7 +1,13 @@
 name: AWS CloudFormation Deployment
 
 on:
-  push:
+    workflow_dispatch:
+        inputs:
+           Universe:
+             description: 'Universe'
+             required: true
+             default: 'dev'
+
     
 
 env:
@@ -34,7 +40,6 @@ jobs:
           --stack-name <stack name> \
           --template-file ecs.yml \
           --parameter-overrides \
-            InternalTargetGroup=${{ secrets.Universe }}${{ secrets.DnsSuffix }}-emodb-megabus-int \
             Universe=${{ secrets.Universe }} \
             Image=${{ secrets.Image }} \
             ConfigImageVersion=${{ secrets.ConfigImageVersion }} \
