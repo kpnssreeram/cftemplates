@@ -40,7 +40,6 @@ jobs:
           --template-file ecsup.yml \
           --parameter-overrides \
             Universe=${{inputs.Universe }} \
-            
           --capabilities CAPABILITY_IAM \
           --no-fail-on-empty-changeset \
           --tags \
@@ -54,6 +53,8 @@ jobs:
             bv:nexus:datatype=client+personal \
             universe=${{ inputs.Universe }} \
             service=ABtesting \
+      env:
+        AWS_DEFAULT_REGION: <region>
 
       env:
         AWS_DEFAULT_REGION: <region>
