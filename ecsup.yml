@@ -8,18 +8,18 @@ Parameters:
     AllowedValues:
       - dev
 
-  Image:
-    Description: The version of the service to have deployed to this stack, e.g. the git commit id
-    Type: String
+  # Image:
+  #   Description: The version of the service to have deployed to this stack, e.g. the git commit id
+  #   Type: String
 
-  TargetPort:
-    Description: HTTP port
-    Type: Number
-    Default: 8080
+  # TargetPort:
+  #   Description: HTTP port
+  #   Type: Number
+  #   Default: 8080
 
-  ConfigImage:
-    Description: Megabus config image
-    Type: String
+  # ConfigImage:
+  #   Description: Megabus config image
+  #   Type: String
 
 Mappings:
   TaskParams:

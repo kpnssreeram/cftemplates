@@ -9,7 +9,6 @@ on:
              default: 'dev'
 
     
-
 env:
     aws-region: ap-south-1
 
@@ -38,17 +37,15 @@ jobs:
       run: |
         aws cloudformation deploy \
           --stack-name <stack name> \
-          --template-file ecs.yml \
+          --template-file ecsup.yml \
           --parameter-overrides \
-            Universe=${{ secrets.Universe }} \
-            Image=${{ secrets.Image }} \
-            ConfigImageVersion=${{ secrets.ConfigImageVersion }} \
-            DnsSuffix=${{ secrets.DnsSuffix }} \
+            Universe=${{inputs.Universe }} \
+            
           --capabilities CAPABILITY_IAM \
           --no-fail-on-empty-changeset \
           --tags \
             bv:nexus:team=emodb-dev@bazaarvoice.com \
-            bv:nexus:vpc=<vpc> \
+            bv:nexus:vpc=<vpc>\
             bv:system=emodb \
             bv:nexus:service=megabus \
             bv:nexus:role=app \
@@ -56,12 +53,8 @@ jobs:
             bv:nexus:access=none \
             bv:nexus:costcenter=emodb-dev@bazaarvoice.com \
             bv:nexus:datatype=client+personal \
-            bv:nexus:env=${{ secrets.env }} \
-            env=${{ secrets.env }} \
-            universe=${{ secrets.Universe }} \
-            service=megabus \
-          --region <region> \
-          --profile <profile>
+            universe=${{ inputs.Universe }} \
+            service=ABtesting \
 
       env:
         AWS_DEFAULT_REGION: <region>
