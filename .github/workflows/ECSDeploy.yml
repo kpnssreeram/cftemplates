@@ -35,7 +35,7 @@ jobs:
 
     - name: Deploy CloudFormation stack
       run: |
-        aws cloudformation create-stack --stack-name ab-test-deployment ---template-file normecs.yml --capabilities CAPABILITY_NAMED_IAM --parameters 'ParameterKey=SubnetID,ParameterValue=subnet-0961246da2943af47'
+        aws cloudformation create-stack --stack-name abtestdeployment --template-file normecs.yml --capabilities CAPABILITY_NAMED_IAM --parameters 'ParameterKey=SubnetID,ParameterValue=subnet-0961246da2943af47'
       
 
   # Add more jobs or steps as needed
