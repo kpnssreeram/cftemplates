@@ -33,34 +33,34 @@ jobs:
         role-session-name: emojiSession
         aws-region: ${{env.aws-region}}
     
-    - name: Deploy to ecr
-      run: |
-        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 058264087706.dkr.ecr.ap-south-1.amazonaws.com
-    
-
-    # - name: Deploy CloudFormation stack
+    # - name: Build Deploy to ecr
     #   run: |
-    #     aws cloudformation deploy \
-    #     --stack-name abstack \
-    #     --template-file normecs.yml \
-    #     --parameter-overrides \
-    #       Universe=${{inputs.Universe }} \
-    #       SubnetID=subnet-0961246da2943af47 \
-    #     --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
-    #     --no-fail-on-empty-changeset \
-    #     --tags \
-    #       bv:nexus:team=emodb-dev@bazaarvoice.com \
-    #       bv:system=emodb \
-    #       bv:nexus:service=megabus \
-    #       bv:nexus:role=app \
-    #       bv:nexus:owner=emodb-dev@bazaarvoice.com \
-    #       bv:nexus:access=none \
-    #       bv:nexus:costcenter=emodb-dev@bazaarvoice.com \
-    #       bv:nexus:datatype=client+personal \
-    #       universe=${{ inputs.Universe }} \
-    #       service=ABtesting
-    #   env:
-    #     AWS_DEFAULT_REGION: <region>
+    #     aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 058264087706.dkr.ecr.ap-south-1.amazonaws.com
+
+
+    - name: Deploy CloudFormation stack
+      run: |
+        aws cloudformation deploy \
+        --stack-name abstack \
+        --template-file normecs.yml \
+        --parameter-overrides \
+          Universe=${{inputs.Universe }} \
+          SubnetID=subnet-0961246da2943af47 \
+        --capabilities CAPABILITY_IAM CAPABILITY_NAMED_IAM \
+        --no-fail-on-empty-changeset \
+        --tags \
+          bv:nexus:team=emodb-dev@bazaarvoice.com \
+          bv:system=emodb \
+          bv:nexus:service=megabus \
+          bv:nexus:role=app \
+          bv:nexus:owner=emodb-dev@bazaarvoice.com \
+          bv:nexus:access=none \
+          bv:nexus:costcenter=emodb-dev@bazaarvoice.com \
+          bv:nexus:datatype=client+personal \
+          universe=${{ inputs.Universe }} \
+          service=ABtesting
+      env:
+        AWS_DEFAULT_REGION: <region>
 
 
   # Add more jobs or steps as needed
