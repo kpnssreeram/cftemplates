@@ -43,7 +43,7 @@ Resources:
       ExecutionRoleArn: !Ref ExecutionRole
       ContainerDefinitions:
         - Name: ab-container
-          Image: 058264087706.dkr.ecr.ap-south-1.amazonaws.com/dockimage:latest
+          Image: dockimage
           PortMappings:
             - ContainerPort: 80
           LogConfiguration:
