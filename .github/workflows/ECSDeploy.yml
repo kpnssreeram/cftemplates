@@ -59,8 +59,7 @@ jobs:
           bv:nexus:datatype=client+personal \
           universe=${{ inputs.Universe }} \
           service=ABtesting
-      env:
-        AWS_DEFAULT_REGION: <region>
+      
 
 
   # Add more jobs or steps as needed
