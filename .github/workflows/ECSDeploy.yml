@@ -40,7 +40,7 @@ jobs:
           --template-file normecs.yml \
           --parameter-overrides \
             Universe=${{inputs.Universe }} \
-            SubnetId=subnet-0961246da2943af47
+            SubnetID=subnet-0961246da2943af47
           --capabilities CAPABILITY_IAM \
           --no-fail-on-empty-changeset \
           --tags \
