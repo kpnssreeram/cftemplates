@@ -11,7 +11,7 @@ on:
     
 env:
     aws-region: ap-south-1
-    
+
 
 permissions:
     id-token: write
@@ -35,7 +35,27 @@ jobs:
 
     - name: Deploy CloudFormation stack
       run: |
-        aws cloudformation deploy --stack-name abtestdeployment --template-file normecs.yml --capabilities CAPABILITY_NAMED_IAM --parameters 'ParameterKey=SubnetID,ParameterValue=subnet-0961246da2943af47'
-      
+        aws cloudformation deploy \
+          --stack-name abstack \
+          --template-file normecs.yml \
+          --parameter-overrides \
+            Universe=${{inputs.Universe }} \
+            SubnetId=subnet-0961246da2943af47
+          --capabilities CAPABILITY_IAM \
+          --no-fail-on-empty-changeset \
+          --tags \
+            bv:nexus:team=emodb-dev@bazaarvoice.com \
+            bv:system=emodb \
+            bv:nexus:service=megabus \
+            bv:nexus:role=app \
+            bv:nexus:owner=emodb-dev@bazaarvoice.com \
+            bv:nexus:access=none \
+            bv:nexus:costcenter=emodb-dev@bazaarvoice.com \
+            bv:nexus:datatype=client+personal \
+            universe=${{ inputs.Universe }} \
+            service=ABtesting \
+      env:
+        AWS_DEFAULT_REGION: <region>
+
 
   # Add more jobs or steps as needed
