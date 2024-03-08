@@ -35,24 +35,7 @@ jobs:
 
     - name: Deploy CloudFormation stack
       run: |
-        aws cloudformation deploy \
-          --stack-name abstack \
-          --template-file ecsup.yml \
-          --parameter-overrides \
-            Universe=${{inputs.Universe }} \
-          --capabilities CAPABILITY_IAM \
-          --no-fail-on-empty-changeset \
-          --tags \
-            bv:nexus:team=emodb-dev@bazaarvoice.com \
-            bv:system=emodb \
-            bv:nexus:service=megabus \
-            bv:nexus:role=app \
-            bv:nexus:owner=emodb-dev@bazaarvoice.com \
-            bv:nexus:access=none \
-            bv:nexus:costcenter=emodb-dev@bazaarvoice.com \
-            bv:nexus:datatype=client+personal \
-            universe=${{ inputs.Universe }} \
-            service=ABtesting \
+        aws cloudformation create-stack --stack-name ab-test-deployment --template-body normecs.yml --capabilities CAPABILITY_NAMED_IAM --parameters 'ParameterKey=SubnetID,ParameterValue=subnet-0961246da2943af47'
       env:
         AWS_DEFAULT_REGION: <region>
 
