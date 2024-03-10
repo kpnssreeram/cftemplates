@@ -95,7 +95,7 @@ Resources:
     Properties:
       Family: !Sub A_B_Testing-${Universe}
       TaskRoleArn: !GetAtt TaskRole.Arn
-      ExecutionRoleArn: !Sub arn:aws:iam::058264087706:role/ecsTaskExecutionRole
+      ExecutionRoleArn: !Sub arn:aws:iam::05826407706:role/ecsTaskExecutionRole
       RequiresCompatibilities:
         - FARGATE
       NetworkMode: awsvpc
