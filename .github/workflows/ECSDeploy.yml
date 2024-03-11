@@ -7,11 +7,8 @@ on:
              description: 'Universe'
              required: true
              default: 'dev'
-
-    
 env:
-    aws-region: ap-south-1
-
+    aws-region: us-east-1
 
 permissions:
     id-token: write
@@ -59,7 +56,4 @@ jobs:
           bv:nexus:datatype=client+personal \
           universe=${{ inputs.Universe }} \
           service=ABtesting
-      
 
-
-  # Add more jobs or steps as needed

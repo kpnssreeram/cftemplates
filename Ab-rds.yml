@@ -2,36 +2,28 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: AWS RDS CloudFormation Template
 
 Parameters:
-  DBInstanceIdentifier:
+  DBNameP:
     Type: String
-    Description: Identifier for the RDS instance
-    Default: MyDBInstance
-
-  MasterUsername:
+  MUser:
     Type: String
-    Description: Master username for the RDS instance
-    Default: admin
-
-  MasterUserPassword:
+  MPass:
     Type: String
-    NoEcho: true
-    Description: Master user password for the RDS instance
-    Default: Password123
+    Description: "It shouldn't be less than 8 characters"
 
 Resources:
-  MyDBInstance:
+  MyDBvideoInstance:
     Type: "AWS::RDS::DBInstance"
     Properties:
-      AllocatedStorage: 20  # Storage size in GB
-      DBInstanceIdentifier: !Ref "DBInstanceIdentifier"
-      Engine: "mysql"  # Choose your preferred RDS engine (mysql, postgres, etc.)
-      MasterUsername: !Ref "MasterUsername"
-      MasterUserPassword: !Ref "MasterUserPassword"
-      DBInstanceClass: "db.t2.micro"  # Free tier-eligible instance type
-      EngineVersion: "5.7"  # Choose your preferred MySQL version
-      PubliclyAccessible: false
-      MultiAZ: false
-      StorageType: "gp2"  # General Purpose (SSD) storage type
+      DBName: !Ref DBNameP
+      MasterUsername: !Ref MUser
+      MasterUserPassword: !Ref MPass
+      Engine: "MySQL"
+      DBInstanceClass: "db.t2.micro"
+      StorageType: "gp2"
+      PubliclyAccessible: true
+      AllocatedStorage: "20"
+      DBInstanceIdentifier: !Join ["-", ["MyDbInstance", !Ref "AWS::Region"]]
+      AvailabilityZones: !Select [1, !GetAZs ""]
 
 Outputs:
   RDSEndpoint:
