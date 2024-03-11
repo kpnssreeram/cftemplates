@@ -1,10 +1,11 @@
 AWSTemplateFormatVersion: "2010-09-09"
 Description: AWS RDS CloudFormation Template
+
 Parameters:
   SubnetID:
     Type: String
+
 Resources:
-  
   Cluster:
     Type: AWS::ECS::Cluster
     Properties:
@@ -25,6 +26,7 @@ Resources:
             Action: sts:AssumeRole
       ManagedPolicyArns:
         - arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy
+
   ContainerSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -35,6 +37,7 @@ Resources:
           FromPort: 80
           ToPort: 80
           CidrIp: 0.0.0.0/0
+
   TaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -57,6 +60,7 @@ Resources:
       RequiresCompatibilities:
         - EC2
         - FARGATE
+        
   Service:
     Type: AWS::ECS::Service
     Properties:
