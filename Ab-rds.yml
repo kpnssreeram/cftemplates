@@ -1,0 +1,39 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Description: AWS RDS CloudFormation Template
+
+Parameters:
+  DBInstanceIdentifier:
+    Type: String
+    Description: Identifier for the RDS instance
+    Default: MyDBInstance
+
+  MasterUsername:
+    Type: String
+    Description: Master username for the RDS instance
+    Default: admin
+
+  MasterUserPassword:
+    Type: String
+    NoEcho: true
+    Description: Master user password for the RDS instance
+    Default: Password123
+
+Resources:
+  MyDBInstance:
+    Type: "AWS::RDS::DBInstance"
+    Properties:
+      AllocatedStorage: 20  # Storage size in GB
+      DBInstanceIdentifier: !Ref "DBInstanceIdentifier"
+      Engine: "mysql"  # Choose your preferred RDS engine (mysql, postgres, etc.)
+      MasterUsername: !Ref "MasterUsername"
+      MasterUserPassword: !Ref "MasterUserPassword"
+      DBInstanceClass: "db.t2.micro"  # Free tier-eligible instance type
+      EngineVersion: "5.7"  # Choose your preferred MySQL version
+      PubliclyAccessible: false
+      MultiAZ: false
+      StorageType: "gp2"  # General Purpose (SSD) storage type
+
+Outputs:
+  RDSEndpoint:
+    Description: "Endpoint URL of the RDS instance"
+    Value: !GetAtt MyDBInstance.Endpoint.Address
